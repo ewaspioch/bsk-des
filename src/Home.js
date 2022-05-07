@@ -1,9 +1,10 @@
 import React from 'react';
+import DES from './DES';
 
 function Home() {
     return (
         <div>
-            <h1>Szyfr DES</h1>
+            <DES />
         </div>
     )
 }
