@@ -1,5 +1,6 @@
 import React from 'react';
 
+//TABELE ZE STALYMI
 const TableIP =
 [
     58, 50, 42, 34, 26, 18, 10, 2,
@@ -38,6 +39,9 @@ const TablePC =
 
 const TableShiftRound = [ 1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1 ];
 
+//************************************************************************************************************************************************************************************
+//DUZO KODU zwiazanego z przeksztalcaniem w BYTE, CHAR etc.
+//************************************************************************************************************************************************************************************
 function CharToByte(byte)
 {
     let converted = byte.charCodeAt().toString(2);
@@ -83,8 +87,13 @@ function BytesToString(bytes)
     }
     return outputText;
 }
+//************************************************************************************************************************************************************************************
+//************************************************************************************************************************************************************************************
+//************************************************************************************************************************************************************************************
 
-function TablePermutation(inputText, tab, n){
+
+//PRZEKSZTALCANIE TABEL
+function TablePermutation(inputText, tab, n){ 
     let outputText = inputText;
     for (let a = 0; a < n; a++) {
         //outputText.charAt(tab.charAt(a) - 1) = inputText.charAt(a);
@@ -94,59 +103,70 @@ function TablePermutation(inputText, tab, n){
     return outputText;
 }
 
-function shiftLeft(key, x){
+//PRZESUWANIE W LEWO
+function shiftLeft(key, x){ 
     let n = key.length;
     let newKey = key;
 
     for (let a = 0, a2 = 0; a < n; a++) {
         if (a + x < n)
-            newKey[a] = key[a + x];
+            newKey = setCharAt(newKey, a, key.charAt(a + x));
+            //newKey[a] = key[a + x];
         else {
-            newKey[a] = key[a2];
+            newKey = setCharAt(newKey, a, key.charAt(a2));
+            //newKey[a] = key[a2];
             a2++;
         }
     }
     return newKey;
 }
 
-//function AlgorithmDES(props) {
-//    let newText = props.inputText;
-//    let newKey = props.key;
-
-//    return <p>{newText} {newKey}</p>;
-//}
-
+//************************************************************************************************************************************************************************************
+//----------GLOWNY ALGORYTM------------------
+//************************************************************************************************************************************************************************************
 function AlgorithmDES(inputText, key){
     let outputText = StringToBytes(inputText);
     outputText = TablePermutation(outputText, TableIP, 64);
-    //let BlockL = outputText.substring(0, 32);
-    //let BlockR = outputText.substring(32, 64);
 
-    //let keyByte = StringToBytes(key);
-    //keyByte = TablePermutation(keyByte, TablePC, 56);
-    //let keyByte2 = "";
-    //for (let a = 0; a < 64; a++) {
-    //    if (((a + 1) % 8) !== 0) {
-    //        keyByte2 += keyByte[a];
-    //    }
-    //}
+    //PODZIAL TEKSTU NA BLOKI: L i R
+    let BlockL = outputText.substring(0, 32);
+    let BlockR = outputText.substring(32, 64);
 
-    //let BlockC = keyByte2.substr(0, 28);
-    //let BlockD = keyByte2.substr(28, 56);
+    //REDUKCJA KLUCZA
+    let keyByte = StringToBytes(key);
+    keyByte = TablePermutation(keyByte, TablePC, 56);
+    let keyByte2 = "";
+    for (let a = 0; a < 64; a++) {
+        if (((a + 1) % 8) !== 0) {
+            keyByte2 += keyByte.charAt(a);
+        }
+    }
 
-    //for (let a = 0; a < 16; a++) {
-    //    BlockC = shiftLeft(BlockC, TableShiftRound[a]);
-    //    BlockD = shiftLeft(BlockD, TableShiftRound[a]);
-    //    let newKey = BlockC + BlockD;
-    //}
+    //PODZIAL KLUCZA NA BLOKI: C i D
+    let BlockC = keyByte2.substr(0, 28);
+    let BlockD = keyByte2.substr(28, 56);
 
+    for (let a = 0; a < 16; a++) {
+        BlockC = shiftLeft(BlockC, TableShiftRound[a]);
+        BlockD = shiftLeft(BlockD, TableShiftRound[a]);
+        let newKey = BlockC + BlockD;
+        //TUTAJ MAJA SIE ODBYWAC TYCH 16 RUND
+    }
+
+
+    //TO TYLKO DO SPRAWDZENIA - wydaje mi sie ze dopiero pozniej przy innych podpunktach trzeba to wykorzystac
     outputText = TablePermutation(outputText, TableIP1, 64);
     outputText = BytesToString(outputText);
+    //*******
 
     return outputText;
 }
+//************************************************************************************************************************************************************************************
+//************************************************************************************************************************************************************************************
+//************************************************************************************************************************************************************************************
 
-function AddBytes(inputText){
+//DODAJE NADMIAROWY BYTE
+function AddBytes(inputText) { 
     let n = inputText.length;
     if (n % 8 === 0) {
         inputText += "0000000";
@@ -162,7 +182,8 @@ function AddBytes(inputText){
     return inputText;
 }
 
-function RemoveBytes(inputText){
+//USUWA NADMIAROWY BYTE
+function RemoveBytes(inputText){ 
     let n = inputText.length;
     let bytesCount = inputText.charAt(n - 1);
     let outputText = inputText.substring(0, n - bytesCount);
@@ -170,6 +191,7 @@ function RemoveBytes(inputText){
     return outputText;
 }
 
+//Pozwala w latwy sposob ustawic chara w stringu
 function setCharAt(text, id, c) {
     if (id > text.length - 1)
         return text;
@@ -177,6 +199,12 @@ function setCharAt(text, id, c) {
 }
 
 
+
+
+
+//************************************************************************************************************************************************************************************
+//----------GLOWNY KLASA------------------
+//************************************************************************************************************************************************************************************
 class DES extends React.Component {
     constructor(props) {
         super(props);
@@ -190,30 +218,35 @@ class DES extends React.Component {
         };
     }    
 
+    //SZYFROWANIE
     Ciphering() {
         var props = { inputText: this.state.inputText, key: this.state.key };
         let outputText = "";
 
         let inputText = this.state.inputText;
         let key = this.state.key;
-        inputText = AddBytes(inputText);
+        inputText = AddBytes(inputText);    //dodanie nadmiarowego bitu
         let n = inputText.length;
-        
+
+
+        //Podzial wiadomosci na 64 bitowe bloki i wykonanie na nich algorytmuDES
         for (let a = 0; a < n; a += 8) {
             let x = inputText.substring(a, a+8);
             outputText += AlgorithmDES(x, key);
         }
 
-        //outputText = inputText;
-
-        outputText = RemoveBytes(outputText);
+        
+        outputText = RemoveBytes(outputText);   //usuwanie nadmiarowego bitu
 
         this.setState({ output: outputText });
     }
 
+    //DESZYFROWANIE - to bedzie prawie takie same co szyfrowanie
     Deciphering() {
         var props = { inputText: this.state.inputText, key: this.state.key };
-        let outputText = AlgorithmDES(props);
+
+        let outputText = this.state.inputText;
+
         this.setState({ output: outputText });
     }
 
