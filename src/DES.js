@@ -43,7 +43,6 @@ function BytesToString(bytes) {
 
 	for (let a = 0; a < n / 8; a++) {
 		let x = bytes.substring(a * 8, a * 8 + 8);
-		console.log(x);
 		outputText += ByteToChar(x);
 	}
 	return outputText;
@@ -160,10 +159,7 @@ const arrayPermutation = (initialArray, permutationArray) => {
 //----------GLOWNY ALGORYTM------------------
 //************************************************************************************************************************************************************************************
 function AlgorithmDES(inputText, key) {
-	console.log(inputText);
-	// console.log(key)
 	let outputText = StringToBytes(inputText);
-	console.log(`sprawdzamy czy A ${outputText}`);
 
 	outputText = TablePermutation(outputText, Constants.TableIP, 64);
 
@@ -174,7 +170,6 @@ function AlgorithmDES(inputText, key) {
 	//REDUKCJA KLUCZA
 	let keyByte = StringToBytes(key);
 	keyByte = TablePermutation(keyByte, Constants.TablePC, 56);
-	let keyByte2 = "";
 
 	// for (let a = 0; a < 64; a++) {
 	//     if (((a + 1) % 8) !== 0) {
@@ -190,6 +185,7 @@ function AlgorithmDES(inputText, key) {
 		BlockC = shiftLeft(BlockC, Constants.TableShiftRound[a]);
 		BlockD = shiftLeft(BlockD, Constants.TableShiftRound[a]);
 		let newKey = BlockC + BlockD;
+
 		//TUTAJ MAJA SIE ODBYWAC TYCH 16 RUND
 
 		let Key48 = TablePermutation(newKey, Constants.TablePC2, 48); // krok 7
@@ -257,7 +253,7 @@ function AlgorithmDES(inputText, key) {
 		// KROK #14
 		let finalBlockR = arrayPermutation(joinedSequence, Constants.tableP);
 		let blocksAfterXOR = XOR(finalBlockR, BlockL);
-		BlockL = finalBlockR.join("");
+		BlockL = BlockR.slice()
 		BlockR = blocksAfterXOR;
 	}
 	let finalSequence = BlockR + BlockL;
@@ -283,8 +279,10 @@ function AlgorithmDES(inputText, key) {
 function AddBytes(inputText) {
 	let n = inputText.length;
 	if (n % 8 === 0) {
-		inputText += "0000000";
-		inputText += 8;
+        // eksperymenty zmiany
+        return inputText
+		// inputText += "0000000";
+		// inputText += 8;
 	} else {
 		for (let a = n % 8; a < 7; a++) {
 			inputText += "0";
