@@ -126,9 +126,8 @@ function Sequence6bytesTo4bytes(position, table) {
 	let indexBCD = BytesToBCD(index, index.length);
 
 	let result = table[columnBCD][indexBCD];
-	// console.log("result " + result)
 	let result4bytes = BCDtoBytes(result);
-	// console.log("result4 " + result4bytes)
+	
 
 	return result4bytes;
 }
@@ -155,6 +154,28 @@ const arrayPermutation = (initialArray, permutationArray) => {
 	return resultArray;
 };
 
+function GetKeys(key){
+	let keys = []
+	let keyByte = StringToBytes(key);
+	keyByte = TablePermutation(keyByte, Constants.TablePC, 56);
+
+
+	let BlockC = keyByte.substring(0, 28);
+	let BlockD = keyByte.substring(28, 56);
+
+	for (let a = 0; a < 16; a++) {
+		BlockC = shiftLeft(BlockC, Constants.TableShiftRound[a]);
+		BlockD = shiftLeft(BlockD, Constants.TableShiftRound[a]);
+		let newKey = BlockC + BlockD;
+
+
+
+		let Key48 = TablePermutation(newKey, Constants.TablePC2, 48);
+		keys.push(Key48)
+	}
+	return keys
+}
+
 //************************************************************************************************************************************************************************************
 //----------GLOWNY ALGORYTM------------------
 //************************************************************************************************************************************************************************************
@@ -168,27 +189,29 @@ function AlgorithmDES(inputText, key) {
 	let BlockR = outputText.substring(32, 64);
 
 	//REDUKCJA KLUCZA
-	let keyByte = StringToBytes(key);
-	keyByte = TablePermutation(keyByte, Constants.TablePC, 56);
+	// let keyByte = StringToBytes(key);
+	// keyByte = TablePermutation(keyByte, Constants.TablePC, 56);
 
 	// for (let a = 0; a < 64; a++) {
 	//     if (((a + 1) % 8) !== 0) {
-	//         keyByte2 += keyByte.charAt(a);          // chyba nie potrzeba sprawia ze z 56 bitowego klucza mamy 49 bity
+	//         keyByte2 += keyByte.charAt(a);          
 	//     }
 	// }
 
 	//PODZIAL KLUCZA NA BLOKI: C i D
-	let BlockC = keyByte.substring(0, 28);
-	let BlockD = keyByte.substring(28, 56);
+	// let BlockC = keyByte.substring(0, 28);
+	// let BlockD = keyByte.substring(28, 56);
 
+	let keys = GetKeys(key)
 	for (let a = 0; a < 16; a++) {
-		BlockC = shiftLeft(BlockC, Constants.TableShiftRound[a]);
-		BlockD = shiftLeft(BlockD, Constants.TableShiftRound[a]);
-		let newKey = BlockC + BlockD;
+		// BlockC = shiftLeft(BlockC, Constants.TableShiftRound[a]);
+		// BlockD = shiftLeft(BlockD, Constants.TableShiftRound[a]);
+		// let newKey = BlockC + BlockD;
 
 		//TUTAJ MAJA SIE ODBYWAC TYCH 16 RUND
 
-		let Key48 = TablePermutation(newKey, Constants.TablePC2, 48); // krok 7
+		// let Key48 = TablePermutation(newKey, Constants.TablePC2, 48); // krok 7
+		let Key48 = keys[a]
 
 		let BlockR48 = TablePermutation(BlockR, Constants.TableE, 48); // krok 8
 
@@ -253,7 +276,7 @@ function AlgorithmDES(inputText, key) {
 		// KROK #14
 		let finalBlockR = arrayPermutation(joinedSequence, Constants.tableP);
 		let blocksAfterXOR = XOR(finalBlockR, BlockL);
-		BlockL = BlockR.slice()
+		BlockL = BlockR.slice();
 		BlockR = blocksAfterXOR;
 	}
 	let finalSequence = BlockR + BlockL;
@@ -271,6 +294,104 @@ function AlgorithmDES(inputText, key) {
 
 	return outputText;
 }
+
+function AlgorithmDESDecipher(inputText, key) {
+	let outputText = StringToBytes(inputText);
+
+	outputText = TablePermutation(outputText, Constants.TableIP, 64);
+
+	//PODZIAL TEKSTU NA BLOKI: L i R
+	let BlockL = outputText.substring(0, 32);
+	let BlockR = outputText.substring(32, 64);
+
+
+	let keys = GetKeys(key)
+	for (let a = 15; a >= 0; a--) {
+		let Key48 = keys[a]
+	
+
+		let BlockR48 = TablePermutation(BlockR, Constants.TableE, 48); // krok 8
+
+		//?
+		let xorResult = XOR(Key48, BlockR48); // krok 9
+
+		let bytes6Sequence1 = xorResult.substring(0, 6); //krok 10
+		let bytes6Sequence2 = xorResult.substring(6, 12);
+		let bytes6Sequence3 = xorResult.substring(12, 18);
+		let bytes6Sequence4 = xorResult.substring(18, 24);
+		let bytes6Sequence5 = xorResult.substring(24, 30);
+		let bytes6Sequence6 = xorResult.substring(30, 36);
+		let bytes6Sequence7 = xorResult.substring(36, 42);
+		let bytes6Sequence8 = xorResult.substring(42, 48);
+
+		let bytes4Sequence1 = Sequence6bytesTo4bytes(
+			bytes6Sequence1,
+			Constants.S1
+		); // krok 11, 12
+		let bytes4Sequence2 = Sequence6bytesTo4bytes(
+			bytes6Sequence2,
+			Constants.S2
+		);
+		let bytes4Sequence3 = Sequence6bytesTo4bytes(
+			bytes6Sequence3,
+			Constants.S3
+		);
+		let bytes4Sequence4 = Sequence6bytesTo4bytes(
+			bytes6Sequence4,
+			Constants.S4
+		);
+		let bytes4Sequence5 = Sequence6bytesTo4bytes(
+			bytes6Sequence5,
+			Constants.S5
+		);
+		let bytes4Sequence6 = Sequence6bytesTo4bytes(
+			bytes6Sequence6,
+			Constants.S6
+		);
+		let bytes4Sequence7 = Sequence6bytesTo4bytes(
+			bytes6Sequence7,
+			Constants.S7
+		);
+		let bytes4Sequence8 = Sequence6bytesTo4bytes(
+			bytes6Sequence8,
+			Constants.S8
+		);
+
+		// szymciowy kod
+
+		// KROK #13
+		let joinedSequence = joinSequences(
+			bytes4Sequence1,
+			bytes4Sequence2,
+			bytes4Sequence3,
+			bytes4Sequence4,
+			bytes4Sequence5,
+			bytes4Sequence6,
+			bytes4Sequence7,
+			bytes4Sequence8
+		);
+		// KROK #14
+		let finalBlockR = arrayPermutation(joinedSequence, Constants.tableP);
+		let blocksAfterXOR = XOR(finalBlockR, BlockL);
+		BlockL = BlockR.slice();
+		BlockR = blocksAfterXOR;
+	}
+	let finalSequence = BlockR + BlockL;
+	let permutedFinal = arrayPermutation(
+		finalSequence.split(""),
+		Constants.TableIP1
+	);
+	console.log(permutedFinal.join(""));
+
+	//TO TYLKO DO SPRAWDZENIA - wydaje mi sie ze dopiero pozniej przy innych podpunktach trzeba to wykorzystac
+	// outputText = TablePermutation(outputText, Constants.TableIP1, 64);
+	outputText = BytesToString(permutedFinal.join(""));
+	console.log(outputText);
+	//*******
+
+	return outputText;
+}
+
 //************************************************************************************************************************************************************************************
 //************************************************************************************************************************************************************************************
 //************************************************************************************************************************************************************************************
@@ -279,8 +400,8 @@ function AlgorithmDES(inputText, key) {
 function AddBytes(inputText) {
 	let n = inputText.length;
 	if (n % 8 === 0) {
-        // eksperymenty zmiany
-        return inputText
+		// eksperymenty zmiany
+		return inputText;
 		// inputText += "0000000";
 		// inputText += 8;
 	} else {
@@ -297,7 +418,9 @@ function AddBytes(inputText) {
 function RemoveBytes(inputText) {
 	let n = inputText.length;
 	let bytesCount = inputText.charAt(n - 1);
+	
 	let outputText = inputText.substring(0, n - bytesCount);
+	
 
 	return outputText;
 }
@@ -350,7 +473,21 @@ class DES extends React.Component {
 	Deciphering() {
 		var props = { inputText: this.state.inputText, key: this.state.key };
 
-		let outputText = this.state.inputText;
+		let outputText = "";
+
+		let inputText = this.state.output;
+		
+		let key = this.state.key;
+		inputText = AddBytes(inputText); //dodanie nadmiarowego bitu
+		let n = inputText.length;
+
+		//Podzial wiadomosci na 64 bitowe bloki i wykonanie na nich algorytmuDES
+		for (let a = 0; a < n; a += 8) {
+			let x = inputText.substring(a, a + 8);
+			outputText += AlgorithmDESDecipher(x, key);
+		}
+
+		// let outputText1 = this.state.outputText;
 
 		// outputText = RemoveBytes(outputText);   //usuwanie nadmiarowego bitu
 		// console.log(`OSTATNI: ${outputText}`)
