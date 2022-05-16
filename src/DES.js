@@ -84,7 +84,7 @@ function XOR(arg1, arg2) {
 
 	let result = "";
 	for (let i = 0; i < length; i++) {
-		if (arg1[i] != arg2[i]) {
+		if (arg1[i] !== arg2[i]) {
 			result += "1";
 		} else {
 			result += "0";
@@ -96,7 +96,7 @@ function XOR(arg1, arg2) {
 function BytesToBCD(code, length) {
 	let resultBCD = 0;
 	for (let i = length; i > 0; i--) {
-		if (code[i - 1] == "1") {
+		if (code[i - 1] === "1") {
 			resultBCD += Math.pow(2, length - i);
 		}
 	}
@@ -449,7 +449,7 @@ class DES extends React.Component {
 
 	//SZYFROWANIE
 	Ciphering() {
-		var props = { inputText: this.state.inputText, key: this.state.key };
+		//var props = { inputText: this.state.inputText, key: this.state.key };
 		let outputText = "";
 
 		let inputText = this.state.inputText;
@@ -471,11 +471,11 @@ class DES extends React.Component {
 
 	//DESZYFROWANIE - to bedzie prawie takie same co szyfrowanie
 	Deciphering() {
-		var props = { inputText: this.state.inputText, key: this.state.key };
+		//var props = { inputText: this.state.inputText, key: this.state.key };
 
 		let outputText = "";
 
-		let inputText = this.state.output;
+		let inputText = this.state.inputText;
 		
 		let key = this.state.key;
 		inputText = AddBytes(inputText); //dodanie nadmiarowego bitu
@@ -489,7 +489,7 @@ class DES extends React.Component {
 
 		// let outputText1 = this.state.outputText;
 
-		// outputText = RemoveBytes(outputText);   //usuwanie nadmiarowego bitu
+		outputText = RemoveBytes(outputText);   //usuwanie nadmiarowego bitu
 		// console.log(`OSTATNI: ${outputText}`)
 		this.setState({ output: outputText });
 	}
